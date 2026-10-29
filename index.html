@@ -134,31 +134,15 @@ const isHC=/sodimac|homcenter|homecenter/i.test(ft);
 const isIE=/internacional.*electricos|iegrupo|809002625/i.test(ft);
 const rm=isHC?ft.match(/N[uú]mero\s+de\s+la\s+Cotizaci[oó]n\s+(\d+)/i):ft.match(/COT-\d+-(\d+)|Cotizaci[oó]n\s*[-–]?\s*([A-Z0-9\/]+)/i);if(rm)document.getElementById('quotRef').value=(rm[1]||rm[2]).trim();
 const pm=isHC?ft.match(/Medios\s+de\s+Pago:\s*([^\n]+)/i):isIE?ft.match(/Condici[oó]n\s+de\s+pago:\s*([^\n]+)/i):ft.match(/[Tt][eé]rminos\s+de\s+pago[:\s]*(\d+\s*d[ií]as)/i);if(pm)document.getElementById('payTerms').value=pm[1].trim();
-if(/inversiones\s+primera|eich|electroiluminaciones/i.test(ft)){document.getElementById('vendorName').value='Inversiones Primera Ltda.';document.getElementById('vendorNit').value='900.025.010-7';highlightVendorChip('Inversiones Primera Ltda.')}else if(isHC){document.getElementById('vendorName').value='SODIMAC COLOMBIA SAS';document.getElementById('vendorNit').value='800.242.106-2';highlightVendorChip('SODIMAC COLOMBIA SAS')}else if(isIE){document.getElementById('vendorName').value='Internacional de Eléctricos S.A.S';document.getElementById('vendorNit').value='809.002.625-7';highlightVendorChip('Internacional de Eléctricos S.A.S')}
-items=[];
-if(isHC){
-  const secS=ft.search(/L[ií]neas/i);const secE=ft.search(/Detalle\s+IVA/i);
-  const sec=(secS>=0&&secE>secS)?ft.substring(secS,secE):ft;
-  const hcD=[...sec.matchAll(/\$([\d,]+)/g)].map(m=>parseInt(m[1].replace(/,/g,'')));
-  const hcQ=[...sec.matchAll(/\b(\d+)\s+19\.0%/g)].map(m=>parseInt(m[1]));
-  const hcPct=[...sec.matchAll(/([\d.]+)%/g)].map(m=>parseFloat(m[1])).filter(p=>Math.abs(p-19)>0.5);
-  const hcCodes=[...sec.matchAll(/\b(\d{1,4})\s+(\d{4,6})\b/g)].map(m=>({r:m[1],c:m[2],i:m.index}));
-  const ni=Math.min(hcQ.length,hcPct.length,Math.floor(hcD.length/4),hcCodes.length);
-  for(let i=0;i<ni;i++){const code=hcCodes[i].c;const pci=hcD[i*4];const psi=Math.round(pci/1.19);const disc=hcPct[i]/100;const tci=hcD[i*4+3];const tsi=Math.round(tci/1.19);const qty=hcQ[i];
-    let desc='';const cp=hcCodes[i].i+hcCodes[i].r.length+1+code.length;const nc=i+1<hcCodes.length?hcCodes[i+1].i:sec.length;const blk=sec.substring(cp,nc);const dm=blk.match(/^\s*([\s\S]*?)\s*\d+\s+19\.0%/);if(dm)desc=dm[1].replace(/[\n\r]+/g,' ').replace(/\s+/g,' ').trim();
-    items.push({id:items.length,code:code,description:desc.substring(0,120),unit:'UND',quantity:qty,unit_price:psi,discount_pct:disc,total:tsi,selected:true})}
-}else if(isIE){
-  const ieP=s=>{if(!s)return 0;return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0};
-  const ctaPos=ft.indexOf('Cta Corriente');const subPos=ft.indexOf('\nSubtotal\n');
-  const skuMs=[...ft.matchAll(/\b(\d{12})\b/g)].filter(m=>m.index<(ctaPos>0?ctaPos:ft.length)&&/\n\n[A-ZÁÉÍÓÚ\(\s1]/.test(ft.slice(m.index+12,m.index+15)));
-  const descsIE=skuMs.map((m,i)=>{const end=i+1<skuMs.length?skuMs[i+1].index:ft.indexOf('Anotaciones',m.index);let blk=ft.slice(m.index+12,end).trim().replace(/^\(1\)\s*/,'').replace(/\s+\d{1,2}\s*$/,'').replace(/\n/g,' ').trim();return blk.substring(0,120)});
-  const umsIE=skuMs.map(m=>{const ctx=ft.slice(m.index,m.index+300);const u=ctx.match(/\b(UND|ML|RLL|MTS|KG|GLN)\b/);return u?u[1]:'UND'});
-  const vlrPos=ft.indexOf('\nValor Total\n');const numBlk=ft.slice(vlrPos,subPos);
-  const cantsIE=[...numBlk.matchAll(/\n ([\d][.\d]*)\n/g)].map(m=>parseInt(m[1].replace(/\./g,''))).filter(n=>n<100000);
-  const puIE=[...numBlk.matchAll(/\$([\d.]+,\d{2})\n/g)].map(m=>ieP(m[1]));
-  const totIE=[...numBlk.matchAll(/\$([\d.]+)\n/g)].filter(m=>!m[1].includes(',')).map(m=>parseInt(m[1].replace(/\./g,'')));
-  const nIE=Math.min(skuMs.length,descsIE.length,umsIE.length,cantsIE.length,puIE.length,totIE.length);
-  for(let i=0;i<nIE;i++){if(cantsIE[i]>0&&totIE[i]>0)items.push({id:items.length,code:skuMs[i][1],description:descsIE[i],unit:umsIE[i],quantity:cantsIE[i],unit_price:puIE[i],discount_pct:0,total:totIE[i],selected:true})}
+if(/inversiones\s+primera|eich|electroiluminaciones/i.test(ft)){document.getElementById('vendorName').value='Inversiones Primera Ltda.';document.getElementById('vendorNit').value='900.025.010-7';highlightVendorChip('Inversiones Primera Ltda.')}else if(isHC){document.getElementById('vendorName').value='SODIMAC COLOMBIA SAS';document.getElementById('vendorNit').value='800.242.106-2';highlightVendorChip('SODIMAC COLOMBIA SAS')}else if(isIE){
+  const ieN=s=>{if(!s)return 0;return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0};
+  const ieClean=d=>d.replace(/^(?:SALVO\/VP\s+)?(?:\(1\)\s+)?/,'').trim();
+  const iePat=/^(UND|ML|RLL|MTS|KG|GLN)\s+([\d.]+)\s+\$([\d.,]+)\s+\$([\d.]+)\s+\d+\s+(\d{12})\s+\S+\s+\S+\s+(?:[^\$\n]+?)\s+(?:\(1\)\s+)?([A-Z\(].+)$/;
+  for(const ln of ft.split('\n')){
+    const m=iePat.exec(ln.trim());if(!m)continue;
+    const um=m[1],cant=parseInt(m[2].replace(/\./g,'')),pu=ieN(m[3]),tot=parseInt(m[4].replace(/\./g,'')),sku=m[5],desc=ieClean(m[6]);
+    if(cant>0&&tot>0)items.push({id:items.length,code:sku,description:desc.substring(0,120),unit:um,quantity:cant,unit_price:pu,discount_pct:0,total:tot,selected:true});
+  }
 }else{
   const cr=/\[([A-Za-z0-9_\-]+)\]/g;const codes=[];let cm;while((cm=cr.exec(ft))!==null)codes.push({code:cm[1],idx:cm.index});
   for(let i=0;i<codes.length;i++){const s=codes[i].idx,e=i+1<codes.length?codes[i+1].idx:ft.indexOf('Subtotal',s)||ft.length;const b=ft.substring(s,e);const ts=[...b.matchAll(/\$\s*([\d.,]+)/g)];const tot=ts.length>0?parseColNum(ts[ts.length-1][1]):0;const qm=b.match(/(\d+[,.]\d+)\s*Unidades/i)||b.match(/(\d+)\s*Unidades/i);const qty=qm?parseColNum(qm[1]):0;const dm=b.match(/(\d+\.?\d*)%/);const disc=dm?parseFloat(dm[1])/100:0;const pr=[...b.matchAll(/(\d{1,3}(?:\.\d{3})*,\d{2})/g)].map(m=>parseColNum(m[1])).filter(n=>n>50);let up=0;if(pr.length>=2)up=pr[1];else if(pr.length===1)up=pr[0];let ds=b.replace(/\[[A-Za-z0-9_\-]+\]/,'').trim();const fn=ds.search(/\d+[,.]\d+\s*Unidades/i);if(fn>0)ds=ds.substring(0,fn).trim();ds=ds.replace(/\s+/g,' ').substring(0,120);if(qty>0||tot>0)items.push({id:items.length,code:codes[i].code,description:ds,unit:'UND',quantity:qty,unit_price:up,discount_pct:disc,total:tot,selected:true})}
